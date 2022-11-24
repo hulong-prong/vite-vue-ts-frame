@@ -2,7 +2,7 @@
  * @Author: HULONG
  * @Date: 2022-11-24 10:25:29
  * @LastEditors: [you name]
- * @LastEditTime: 2022-11-24 11:08:32
+ * @LastEditTime: 2022-11-24 13:59:36
  * @Description:
  */
 import { ConfigEnv, defineConfig, UserConfig } from 'vite'
@@ -10,6 +10,7 @@ import path from 'path'
 import vue from '@vitejs/plugin-vue'
 import pluginJSX from '@vitejs/plugin-vue-jsx'
 import tailWind from 'vite-plugin-windicss'
+import pluginEslint from 'vite-plugin-eslint'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command }: ConfigEnv): UserConfig => {
@@ -38,6 +39,13 @@ export default defineConfig(({ command }: ConfigEnv): UserConfig => {
     esbuild: {
       drop: isBuild ? ['console', 'debugger'] : undefined,
     },
-    plugins: [vue(), pluginJSX(), tailWind()],
+    plugins: [
+      vue(),
+      pluginJSX(),
+      tailWind(),
+      pluginEslint({
+        include: ['src/**/*.ts', 'src/**/*.d.ts', 'src/**/*.tsx', 'src/**/*.vue'],
+      }),
+    ],
   }
 })
