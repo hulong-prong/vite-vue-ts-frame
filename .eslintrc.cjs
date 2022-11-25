@@ -2,7 +2,7 @@
  * @Author: HULONG
  * @Date: 2022-11-24 10:28:55
  * @LastEditors: [you name]
- * @LastEditTime: 2022-11-24 13:39:48
+ * @LastEditTime: 2022-11-25 14:12:29
  * @Description:
  */
 module.exports = {
@@ -31,9 +31,11 @@ module.exports = {
         extendDefaults: true,
         types: {
           '{}': false,
+          Function: false,
         },
       },
     ],
-    'vue/no-multiple-template-root': 'off',
+    'vue/no-multiple-template-root': 0,
+    'vue/multi-word-component-names': 0,
   },
 }
