@@ -11,6 +11,7 @@
     "lint-staged": "lint-staged"
   },
   "dependencies": {
+    "ant-design-vue": "^3.2.15",
     "axios": "^1.2.0",
     "lodash-es": "^4.17.21",
     "pinia": "^2.0.26",

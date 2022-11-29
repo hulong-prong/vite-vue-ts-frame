@@ -2,7 +2,7 @@
  * @Author: HULONG
  * @Date: 2022-11-24 10:25:29
  * @LastEditors: [you name]
- * @LastEditTime: 2022-11-24 13:59:36
+ * @LastEditTime: 2022-11-28 14:57:51
  * @Description:
  */
 import { ConfigEnv, defineConfig, UserConfig } from 'vite'
@@ -47,5 +47,13 @@ export default defineConfig(({ command }: ConfigEnv): UserConfig => {
         include: ['src/**/*.ts', 'src/**/*.d.ts', 'src/**/*.tsx', 'src/**/*.vue'],
       }),
     ],
+    // optimizeDeps: {
+    //   include: [
+    //     'ant-design-vue/es/locale/zh_CN',
+    //     'ant-design-vue/es/locale/en_US',
+    //     'dayjs/dist/locale/zh-cn',
+    //     'dayjs/dist/locale/eu',
+    //   ],
+    // },
   }
 })

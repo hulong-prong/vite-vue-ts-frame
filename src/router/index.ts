@@ -1,5 +1,6 @@
 import type { App } from 'vue'
 import { createRouter, createWebHashHistory } from 'vue-router'
+import { transformMenusRoute } from './guard/routeToMenus'
 import { defaultRoute, routes } from './route/defineRoute'
 
 export const router = createRouter({
