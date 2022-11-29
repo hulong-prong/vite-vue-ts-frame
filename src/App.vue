@@ -1,28 +1,19 @@
-<script setup lang="ts">
-import { useUserStore } from './store/modules/user'
-const userStore = useUserStore()
-const handleSetToken = () => {
-  userStore.setToken('设置新的token ')
-}
-</script>
-
+<!--
+ * @Author: HULONG
+ * @Date: 2022-09-23 17:25:54
+ * @LastEditors: [you name]
+ * @LastEditTime: 2022-11-29 10:48:16
+ * @Description: 
+-->
 <template>
-  <div>
-    <p>{{ userStore.token }}</p>
-    <div @click="handleSetToken">点击操作</div>
-  </div>
+  <ConfigProvider :locale="locale">
+    <div class="w-full h-full"><router-view /></div>
+  </ConfigProvider>
 </template>
-
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
-}
-</style>
+<script lang="ts" setup>
+import { ConfigProvider } from 'ant-design-vue'
+import locale from 'ant-design-vue/es/locale/zh_CN'
+import dayjs from 'dayjs'
+import 'dayjs/locale/zh-cn'
+dayjs.locale('zh-cn')
+</script>

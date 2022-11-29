@@ -2,7 +2,7 @@
  * @Author: HULONG
  * @Date: 2022-11-24 10:28:55
  * @LastEditors: [you name]
- * @LastEditTime: 2022-11-25 14:12:29
+ * @LastEditTime: 2022-11-29 15:22:13
  * @Description:
  */
 module.exports = {
@@ -22,6 +22,10 @@ module.exports = {
     ecmaVersion: 'latest',
     parser: '@typescript-eslint/parser',
     sourceType: 'module',
+    jsxPragma: 'React',
+    ecmaFeatures: {
+      jsx: true,
+    },
   },
   plugins: ['vue', '@typescript-eslint'],
   rules: {
@@ -37,5 +41,6 @@ module.exports = {
     ],
     'vue/no-multiple-template-root': 0,
     'vue/multi-word-component-names': 0,
+    '@typescript-eslint/ban-ts-comment': 1,
   },
 }

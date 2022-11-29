@@ -1,6 +1,12 @@
+/*
+ * @Author: HULONG
+ * @Date: 2022-11-25 14:06:30
+ * @LastEditors: [you name]
+ * @LastEditTime: 2022-11-29 11:07:22
+ * @Description:
+ */
 import type { App } from 'vue'
 import { createRouter, createWebHashHistory } from 'vue-router'
-import { transformMenusRoute } from './guard/routeToMenus'
 import { defaultRoute, routes } from './route/defineRoute'
 
 export const router = createRouter({

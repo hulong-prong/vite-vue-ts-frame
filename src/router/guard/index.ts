@@ -1,3 +1,10 @@
+/*
+ * @Author: HULONG
+ * @Date: 2022-11-28 17:03:27
+ * @LastEditors: [you name]
+ * @LastEditTime: 2022-11-29 14:32:36
+ * @Description:
+ */
 import { Router } from 'vue-router'
 import { LOGINNAME } from '../route/defineRoute'
 import { PageEnum } from '/@/enums/page'
@@ -22,7 +29,16 @@ const loginPageReset = (router: Router) => {
     }
   })
 }
-
+const createPageGuard = (router: Router) => {
+  const loadedPageMap = new Map<string, boolean>()
+  router.beforeEach(async (to) => {
+    to.meta.loaded = !!loadedPageMap.get(to.path)
+    return true
+  })
+  router.afterEach((to) => {
+    loadedPageMap.set(to.path, true)
+  })
+}
 const createPageLoadingGuard = (router: Router) => {
   const userStore = useUserStore()
   const appStore = useAppStore()
@@ -33,7 +49,7 @@ const createPageLoadingGuard = (router: Router) => {
     if (to.meta.loaded) {
       return true
     }
-    appStore.setLoading(true)
+    appStore.setPageLoadingAction(true)
     return true
   })
   router.afterEach(async () => {
@@ -45,6 +61,7 @@ const createPageLoadingGuard = (router: Router) => {
 }
 
 export function setupRouterGuard(router: Router) {
+  createPageGuard(router)
   createPageLoadingGuard(router)
   pageCheckToken(router)
   loginPageReset(router)

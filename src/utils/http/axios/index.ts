@@ -2,7 +2,7 @@
  * @Author: HULONG
  * @Date: 2022-11-24 15:40:17
  * @LastEditors: [you name]
- * @LastEditTime: 2022-11-24 16:47:10
+ * @LastEditTime: 2022-11-29 15:16:29
  * @Description:
  */
 import type { AxiosResponse } from 'axios'
@@ -13,10 +13,27 @@ import { RequestEnum, ResultEnum, ContentTypeEnum } from '/@/enums/request'
 import { isString } from '/@/utils/is'
 import { setObjToUrlParams, deepMerge } from '/@/utils'
 import { joinTimestamp } from './helper'
+import { message, Modal } from 'ant-design-vue'
+import { useUserStore, useUserStoreWithOut } from '/@/store/modules/user'
+
+const httpErrorStatus = {
+  '401': '用户没有权限（令牌、用户名、密码错误）!',
+  '403': '用户得到授权，但是访问是被禁止的。!',
+  '404': '网络请求错误,未找到该资源!',
+  '405': '网络请求错误,请求方法未允许!',
+  '408': '网络请求超时!',
+  '500': '服务器错误,请联系管理员!',
+  '501': '网络未实现!',
+  '502': '网络错误!',
+  '503': '服务不可用，服务器暂时过载或维护!',
+  '504': '网络超时!',
+  '505': 'http版本不支持该请求!',
+}
 /**
  * 从环境变量中获取代理前缀，和接口统一前缀
  */
-const { VITE_GLOB_API_URL: proxyUrl, VITE_GLOB_API_URL_PREFIX: prefixUrl } = import.meta.env
+const { VITE_GLOB_API_URL: proxyUrl, VITE_GLOB_API_URL_PREFIX: prefixUrl } =
+  import.meta.env
 /**
  * @description: 数据处理，方便区分多种处理方式
  */
@@ -24,7 +41,10 @@ const transform: AxiosTransform = {
   /**
    * @description: 请求结果处理
    */
-  transformResponseHook: (res: AxiosResponse<Result>, options: RequestOptions) => {
+  transformResponseHook: (
+    res: AxiosResponse<Result>,
+    options: RequestOptions,
+  ) => {
     const { isTransformResponse, isReturnNativeResponse } = options
     // 是否返回原生响应头 比如：需要获取响应头时使用该属性
     if (isReturnNativeResponse) {
@@ -43,7 +63,8 @@ const transform: AxiosTransform = {
     const { code, data: result, message, subMessage, subCode } = data
 
     // 这里逻辑可以根据项目进行修改
-    const hasSuccess = data && Reflect.has(data, 'code') && code === ResultEnum.SUCCESS
+    const hasSuccess =
+      data && Reflect.has(data, 'code') && code === ResultEnum.SUCCESS
     if (hasSuccess) {
       return result
     }
@@ -52,7 +73,13 @@ const transform: AxiosTransform = {
 
   // 请求发起之前处理数据
   beforeRequestHook: (config, options) => {
-    const { apiUrl, joinPrefix, joinParamsToUrl, formatDate, joinTime = true } = options
+    const {
+      apiUrl,
+      joinPrefix,
+      joinParamsToUrl,
+      formatDate,
+      joinTime = true,
+    } = options
     if (joinPrefix) {
       config.url = `${prefixUrl}${config.url}`
     }
@@ -64,7 +91,10 @@ const transform: AxiosTransform = {
     if (config.method?.toUpperCase() === RequestEnum.GET) {
       if (!isString(params)) {
         // 给 get 请求加上时间戳参数，避免从缓存中拿数据。
-        config.params = Object.assign(params || {}, joinTimestamp(joinTime, false))
+        config.params = Object.assign(
+          params || {},
+          joinTimestamp(joinTime, false),
+        )
       } else {
         // 兼容restful风格
         config.url = config.url + params + `${joinTimestamp(joinTime, true)}`
@@ -72,7 +102,11 @@ const transform: AxiosTransform = {
       }
     } else {
       if (!isString(params)) {
-        if (Reflect.has(config, 'data') && config.data && Object.keys(config.data).length > 0) {
+        if (
+          Reflect.has(config, 'data') &&
+          config.data &&
+          Object.keys(config.data).length > 0
+        ) {
           config.data = data
           config.params = params
         } else {
@@ -100,6 +134,13 @@ const transform: AxiosTransform = {
    */
   requestInterceptors: (config, options) => {
     //TODO 追加token
+    const userStore = useUserStoreWithOut()
+    const token = userStore.token
+    if (token && (config as Recordable)?.requestOptions?.withToken !== false) {
+      config.headers!.Authorization = options.authenticationScheme
+        ? `${options.authenticationScheme} ${token}`
+        : token
+    }
     return config
   },
   /**
@@ -122,14 +163,14 @@ const transform: AxiosTransform = {
    * @description: 响应错误处理
    */
   responseInterceptorsCatch: (error: any) => {
-    const { response, code, message, config } = error || {}
+    const { response, code, message: messageText, config } = error || {}
     const errorMessageMode = config?.requestOptions?.errorMessageMode || 'none'
     const msg: string = response?.data?.error?.message ?? ''
     const err: string = error?.toString?.() ?? ''
     let errMessage = ''
 
     try {
-      if (code === 'ECONNABORTED' && message.indexOf('timeout') !== -1) {
+      if (code === 'ECONNABORTED' && messageText.indexOf('timeout') !== -1) {
         errMessage = '接口请求超时'
       }
       if (err?.includes('Network Error')) {
@@ -137,13 +178,35 @@ const transform: AxiosTransform = {
       }
 
       if (errMessage) {
-        //TODO 异常处理可以
+        if (errorMessageMode === 'message') {
+          message.error(errMessage)
+        } else if (errorMessageMode === 'modal') {
+          Modal.error({
+            title: '错误提示',
+            content: errMessage,
+          })
+        }
         return Promise.reject(error)
       }
     } catch (error: any) {
       throw new Error(error)
     }
     //TODO 根据状态码，响应错误
+    const errorText =
+      error?.response?.status === 400
+        ? msg
+        : // @ts-ignore
+          httpErrorStatus[error?.response?.status]
+    if (errorText) {
+      if (errorMessageMode === 'message') {
+        message.error(errorText)
+      } else if (errorMessageMode === 'modal') {
+        Modal.error({
+          title: '错误提示',
+          content: errorText,
+        })
+      }
+    }
     return Promise.reject(error)
   },
 }
@@ -159,8 +222,6 @@ function createAxios(opt?: Partial<CreateAxiosOptions>) {
         // 接口可能会有通用的地址部分，可以统一抽取出来
         urlPrefix: prefixUrl,
         headers: { 'Content-Type': ContentTypeEnum.JSON },
-        // 如果是form-data格式
-        // headers: { 'Content-Type': ContentTypeEnum.FORM_URLENCODED },
         // 数据处理方式
         transform,
         // 配置项，下面的选项都可以在独立的接口请求中覆盖
