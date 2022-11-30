@@ -2,7 +2,7 @@
  * @Author: HULONG
  * @Date: 2022-11-24 15:40:17
  * @LastEditors: [you name]
- * @LastEditTime: 2022-11-25 11:19:02
+ * @LastEditTime: 2022-11-30 11:00:01
  * @Description:
  */
 import type { AxiosRequestConfig, AxiosInstance, AxiosResponse } from 'axios'
@@ -39,16 +39,21 @@ export class VAxios {
       responseInterceptors,
       responseInterceptorsCatch,
     } = transform
-    this.axiosInstance.interceptors.request.use((config: AxiosRequestConfig) => {
-      //TODO 处理
-      if (requestInterceptors && isFunction(requestInterceptors)) {
-        config = requestInterceptors(config, this.options)
-      }
-      return config
-    })
+    this.axiosInstance.interceptors.request.use(
+      (config: AxiosRequestConfig) => {
+        //TODO 处理
+        if (requestInterceptors && isFunction(requestInterceptors)) {
+          config = requestInterceptors(config, this.options)
+        }
+        return config
+      },
+    )
 
     if (requestInterceptorsCatch && isFunction(requestInterceptorsCatch)) {
-      this.axiosInstance.interceptors.request.use(undefined, requestInterceptorsCatch)
+      this.axiosInstance.interceptors.request.use(
+        undefined,
+        requestInterceptorsCatch,
+      )
     }
     this.axiosInstance.interceptors.response.use((res: AxiosResponse) => {
       if (responseInterceptors && isFunction(responseInterceptors)) {
@@ -57,7 +62,10 @@ export class VAxios {
       return res
     })
     if (responseInterceptorsCatch && isFunction(responseInterceptorsCatch)) {
-      this.axiosInstance.interceptors.response.use(undefined, responseInterceptorsCatch)
+      this.axiosInstance.interceptors.response.use(
+        undefined,
+        responseInterceptorsCatch,
+      )
     }
   }
   supportFormData(config: AxiosRequestConfig) {
@@ -76,7 +84,10 @@ export class VAxios {
     }
   }
   // 请求
-  request<T = any>(config: AxiosRequestConfig, options?: RequestOptions): Promise<T> {
+  request<T = any>(
+    config: AxiosRequestConfig,
+    options?: RequestOptions,
+  ): Promise<T> {
     let consel: CreateAxiosOptions = cloneDeep(config)
     const transform = this.getTransform()
     const { requestOptions } = this.options
@@ -109,19 +120,34 @@ export class VAxios {
         })
     })
   }
-  get<T = any>(config: AxiosRequestConfig, options?: RequestOptions): Promise<T> {
+  get<T = any>(
+    config: AxiosRequestConfig,
+    options?: RequestOptions,
+  ): Promise<T> {
     return this.request<T>({ ...config, method: 'GET' }, options)
   }
-  post<T = any>(config: AxiosRequestConfig, options?: RequestOptions): Promise<T> {
+  post<T = any>(
+    config: AxiosRequestConfig,
+    options?: RequestOptions,
+  ): Promise<T> {
     return this.request<T>({ ...config, method: 'POST' }, options)
   }
-  delete<T = any>(config: AxiosRequestConfig, options?: RequestOptions): Promise<T> {
+  delete<T = any>(
+    config: AxiosRequestConfig,
+    options?: RequestOptions,
+  ): Promise<T> {
     return this.request<T>({ ...config, method: 'DELETE' }, options)
   }
-  put<T = any>(config: AxiosRequestConfig, options?: RequestOptions): Promise<T> {
+  put<T = any>(
+    config: AxiosRequestConfig,
+    options?: RequestOptions,
+  ): Promise<T> {
     return this.request<T>({ ...config, method: 'PUT' }, options)
   }
-  fileUpload<T = any>(config: AxiosRequestConfig, params: UploadFileParams): Promise<T> {
+  fileUpload<T = any>(
+    config: AxiosRequestConfig,
+    params: UploadFileParams,
+  ): Promise<T> {
     const formData = new window.FormData()
 
     if (params.data) {
