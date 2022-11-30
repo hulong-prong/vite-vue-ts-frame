@@ -2,7 +2,7 @@
  * @Author: HULONG
  * @Date: 2022-11-24 15:40:17
  * @LastEditors: [you name]
- * @LastEditTime: 2022-11-29 15:16:29
+ * @LastEditTime: 2022-11-30 10:41:41
  * @Description:
  */
 import type { AxiosResponse } from 'axios'
@@ -14,7 +14,8 @@ import { isString } from '/@/utils/is'
 import { setObjToUrlParams, deepMerge } from '/@/utils'
 import { joinTimestamp } from './helper'
 import { message, Modal } from 'ant-design-vue'
-import { useUserStore, useUserStoreWithOut } from '/@/store/modules/user'
+import { useUserStoreWithOut } from '/@/store/modules/user'
+import { useRouter } from 'vue-router'
 
 const httpErrorStatus = {
   '401': '用户没有权限（令牌、用户名、密码错误）!',
@@ -60,8 +61,13 @@ const transform: AxiosTransform = {
       throw new Error('请求出错，请稍候重试')
     }
     //  这里 code，result，message为 后台统一的字段，需要在 types.ts内修改为项目自己的接口返回格式
-    const { code, data: result, message, subMessage, subCode } = data
-
+    const {
+      code,
+      data: result,
+      message: messageText,
+      subMessage,
+      subCode,
+    } = data
     // 这里逻辑可以根据项目进行修改
     const hasSuccess =
       data && Reflect.has(data, 'code') && code === ResultEnum.SUCCESS
@@ -69,17 +75,71 @@ const transform: AxiosTransform = {
       return result
     }
     //TODO 响应异常处理
+    let errorText = ''
+    switch (code) {
+      case ResultEnum.TIMEOUT:
+        errorText = '请求超时'
+        break
+      case ResultEnum.PARAM_ERROR:
+        errorText = subMessage || '参数错误，请检查接口参数'
+        break
+      case ResultEnum.BIZ_ERROR:
+        if (subCode === 'A00020') {
+          errorText = '账号已冻结, 请联系管理员解冻或第二天在登录'
+        } else if (subCode === 'A0210' || subCode === 'A0201') {
+          const arr = subMessage?.split(':')
+          if (arr?.length === 3) {
+            if (arr && arr[0] > arr[1] + arr[2]) {
+              errorText = `账号或密码错误，你还有${
+                Number(arr[0]) - Number(arr[1]) - Number(arr[2])
+              }次机会`
+            }
+            if (arr && Number(arr[0]) - Number(arr[1]) - Number(arr[2]) === 0) {
+              errorText = '账号已冻结, 请联系管理员解冻或第二天在登录'
+            }
+          } else {
+            errorText = subMessage || '业务错误'
+          }
+        } else {
+          errorText = subMessage || '业务错误'
+        }
+        break
+      case ResultEnum.SYSTEM_ERROR:
+        errorText = subMessage || '系统错误，请联系管理员'
+        break
+      case ResultEnum.UNAUTHORIZED: {
+        errorText = subMessage || '未授权，请联系管理员'
+        const userStore = useUserStoreWithOut()
+        userStore.setToken('')
+        if (
+          res?.config.baseURL?.indexOf(
+            '/systemConfigManager/getSystemBaseInfo',
+          ) === -1
+        ) {
+          const Router = useRouter()
+          Router.push('/login')
+        }
+        break
+      }
+      default:
+        if (messageText) {
+          errorText = messageText
+        }
+    }
+    if (options.errorMessageMode === 'message') {
+      message.error(errorText)
+    } else if (options.errorMessageMode === 'modal') {
+      Modal.error({
+        title: '错误提示',
+        content: errorText,
+      })
+    }
+    throw new Error(errorText || '请求失败')
   },
 
   // 请求发起之前处理数据
   beforeRequestHook: (config, options) => {
-    const {
-      apiUrl,
-      joinPrefix,
-      joinParamsToUrl,
-      formatDate,
-      joinTime = true,
-    } = options
+    const { apiUrl, joinPrefix, joinParamsToUrl, joinTime = true } = options
     if (joinPrefix) {
       config.url = `${prefixUrl}${config.url}`
     }
